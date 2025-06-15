@@ -9,7 +9,7 @@
 
 ## 安装
 1. 安装油猴扩展：[Tampermonkey](https://www.tampermonkey.net/) 或 [Violentmonkey](https://violentmonkey.github.io/)
-2. 点击[此处安装脚本](https://github.com/StarsWhere/repo/raw/main/Bilibili-Video-Ad-Skipper.js)
+2. 点击[此处安装脚本](https://github.com/StarsWhere/Bilibili-Video-Ad-Skipper/blob/main/Bilibili-Video-Ad-Skipper.js)
 
 ## 使用
 安装后访问Bilibili视频页，广告将自动跳过。
