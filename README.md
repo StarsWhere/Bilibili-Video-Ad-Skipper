@@ -1,7 +1,7 @@
 
 # B站视频广告跳过助手 (Bilibili Ad Skipper)
 
-![项目Logo](./png\icon.png)
+![项目Logo](./png/icon.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Greasy Fork](https://img.shields.io/greasyfork/v/YOUR-SCRIPT-ID?label=Greasy%20Fork)](https://greasyfork.org/zh-CN/scripts/YOUR-SCRIPT-ID)
