@@ -1,0 +1,15 @@
+# IDE files
+.idea/
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# Dependency directories
+node_modules/
+
+# System files
+.DS_Store
+Thumbs.db
+old
