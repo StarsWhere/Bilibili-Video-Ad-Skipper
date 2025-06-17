@@ -127,8 +127,8 @@
                 --shadow: 0 2px 8px rgba(0,0,0,0.1);
                 --shadow-lg: 0 4px 16px rgba(0,0,0,0.15);
             }
-
-            .dark-theme {
+    
+            .dark-theme, .bili-ai-skipper-settings-backdrop.dark-theme, .bili-ai-skipper-first-time-modal.dark-theme {
                 --text-primary: #e0e0e0;
                 --text-secondary: #b0b0b0;
                 --bg-primary: #2a2a2a;
@@ -137,7 +137,7 @@
                 --shadow: 0 2px 8px rgba(0,0,0,0.3);
                 --shadow-lg: 0 4px 16px rgba(0,0,0,0.4);
             }
-
+    
             /* 圆形悬浮按钮 */
             .bili-ai-skipper-floating-btn {
                 position: fixed;
@@ -157,104 +157,63 @@
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
             }
-
             .bili-ai-skipper-floating-btn:hover {
                 opacity: 1;
                 transform: scale(1.1);
-                box-shadow: var(--shadow-lg);
             }
-
             .bili-ai-skipper-floating-btn img {
                 width: 24px;
                 height: 24px;
-                /* 默认滤镜，如果图标本身颜色合适或希望保持原色，可注释或调整此行 */
                 /* filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%); */
             }
-
             .bili-ai-skipper-floating-btn.dark-theme img {
-                /* 暗色主题下的滤镜，如果图标本身颜色合适或希望保持原色，可注释或调整此行 */
                 /* filter: brightness(0) saturate(100%) invert(100%); */
             }
-
+    
             /* Toast 消息 */
             .bili-ai-skipper-toast {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: var(--bg-primary);
-                color: var(--text-primary);
-                padding: 12px 20px;
-                border-radius: 8px;
-                box-shadow: var(--shadow-lg);
-                z-index: 10001;
-                font-size: 14px;
-                border-left: 4px solid var(--primary-color);
-                max-width: 300px;
-                word-wrap: break-word;
-                animation: slideInRight 0.3s ease;
+                position: fixed; top: 20px; right: 20px;
+                background: var(--bg-primary); color: var(--text-primary);
+                padding: 12px 20px; border-radius: 8px; box-shadow: var(--shadow-lg);
+                z-index: 10001; font-size: 14px; border-left: 4px solid var(--primary-color);
+                max-width: 300px; word-wrap: break-word; animation: slideInRight 0.3s ease;
             }
-
             @keyframes slideInRight {
                 from { transform: translateX(100%); opacity: 0; }
                 to { transform: translateX(0); opacity: 1; }
             }
-
+    
             /* 设置界面 */
             .bili-ai-skipper-settings-backdrop {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 10002;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0, 0, 0, 0.5); z-index: 10002;
+                display: flex; align-items: center; justify-content: center;
                 animation: fadeIn 0.2s ease;
             }
-
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
             .bili-ai-skipper-settings-modal {
-                background: var(--bg-primary);
-                color: var(--text-primary);
-                border-radius: 12px;
-                width: 90%;
-                max-width: 900px; /* 或根据需要调整 */
-                height: 800px; /* 固定高度，或使用vh如75vh */
-                display: flex;
-                flex-direction: column;
-                box-shadow: var(--shadow-lg);
-                animation: slideInDown 0.3s ease;
-                overflow: hidden; /* 防止模态框本身滚动 */
+                background: var(--bg-primary); color: var(--text-primary);
+                border-radius: 12px; width: 90%; max-width: 800px; height: 700px;
+                display: flex; flex-direction: column; box-shadow: var(--shadow-lg);
+                animation: slideInDown 0.3s ease; overflow: hidden;
             }
-
+            .bili-ai-skipper-settings-modal.dark-theme { /* Ensure modal itself gets dark theme vars */
+                background: var(--bg-primary); color: var(--text-primary);
+            }
             @keyframes slideInDown {
                 from { transform: translateY(-50px); opacity: 0; }
                 to { transform: translateY(0); opacity: 1; }
             }
-
+    
             .bili-ai-skipper-settings-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 20px;
-                border-bottom: 1px solid var(--border-color);
-                background: var(--bg-secondary);
-                flex-shrink: 0; /* 防止头部被压缩 */
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 20px; border-bottom: 1px solid var(--border-color);
+                background: var(--bg-secondary); flex-shrink: 0;
             }
-
             .bili-ai-skipper-settings-title {
-                margin: 0;
-                font-size: 18px;
-                font-weight: 600;
-                color: var(--text-primary);
+                margin: 0; font-size: 18px; font-weight: 600; color: var(--text-primary);
             }
-
             .bili-ai-skipper-settings-close {
                 background: none; border: none; font-size: 24px; cursor: pointer;
                 color: var(--text-secondary); padding: 0; width: 30px; height: 30px;
@@ -262,17 +221,13 @@
                 transition: all 0.2s ease;
             }
             .bili-ai-skipper-settings-close:hover { background: var(--danger-color); color: white; }
-
+    
             .bili-ai-skipper-settings-body {
-                padding: 0; /* 内边距移到tab-content */
-                flex-grow: 1; /* 占据剩余空间 */
-                overflow-y: auto; /* 内容超出时此区域滚动 */
+                padding: 0; flex-grow: 1; overflow-y: auto;
             }
-
             .bili-ai-skipper-settings-tabs {
                 display: flex; background: var(--bg-secondary);
-                border-bottom: 1px solid var(--border-color);
-                flex-shrink: 0; /* 防止标签栏被压缩 */
+                border-bottom: 1px solid var(--border-color); flex-shrink: 0;
             }
             .bili-ai-skipper-settings-tab {
                 flex: 1; padding: 15px 20px; border: none; background: none;
@@ -286,40 +241,38 @@
             .bili-ai-skipper-settings-tab:hover:not(.active) {
                 color: var(--text-primary); background: var(--bg-primary);
             }
-
             .bili-ai-skipper-tab-content { display: none; padding: 20px; }
             .bili-ai-skipper-tab-content.active { display: block; }
-
-            .bili-ai-skipper-settings-section { margin-bottom: 30px; }
+    
+            .bili-ai-skipper-settings-section { margin-bottom: 25px; }
+            .bili-ai-skipper-settings-section:last-child { margin-bottom: 0; }
             .bili-ai-skipper-settings-section h3 {
                 margin: 0 0 15px 0; font-size: 16px; font-weight: 600;
                 color: var(--text-primary); border-bottom: 1px solid var(--border-color);
                 padding-bottom: 8px;
             }
-
             .bili-ai-skipper-settings-group { margin-bottom: 15px; }
             .bili-ai-skipper-settings-group-inline { display: flex; gap: 15px; margin-bottom: 15px; }
             .bili-ai-skipper-settings-group-inline > div { flex: 1; }
-
             .bili-ai-skipper-settings-label {
                 display: block; margin-bottom: 5px; font-weight: 500;
                 color: var(--text-primary); font-size: 14px;
             }
-
             .bili-ai-skipper-settings-input,
-            .bili-ai-skipper-settings-select {
+            .bili-ai-skipper-settings-select,
+            .bili-ai-skipper-list-input input[type="text"] {
                 width: 100%; padding: 10px 12px; border: 1px solid var(--border-color);
                 border-radius: 6px; background: var(--bg-primary); color: var(--text-primary);
                 font-size: 14px; transition: all 0.2s ease; box-sizing: border-box;
             }
             .bili-ai-skipper-settings-input:focus,
-            .bili-ai-skipper-settings-select:focus {
+            .bili-ai-skipper-settings-select:focus,
+            .bili-ai-skipper-list-input input[type="text"]:focus {
                 outline: none; border-color: var(--primary-color);
                 box-shadow: 0 0 0 2px rgba(0, 174, 236, 0.2);
             }
-
             .bili-ai-skipper-settings-textarea {
-                width: 100%; min-height: 440px; padding: 12px;
+                width: 100%; min-height: 200px; padding: 12px;
                 border: 1px solid var(--border-color); border-radius: 6px;
                 background: var(--bg-primary); color: var(--text-primary);
                 font-size: 14px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -330,19 +283,15 @@
                 outline: none; border-color: var(--primary-color);
                 box-shadow: 0 0 0 2px rgba(0, 174, 236, 0.2);
             }
-
             .bili-ai-skipper-settings-checkbox { display: flex; align-items: center; margin-bottom: 10px; }
-            .bili-ai-skipper-settings-checkbox input[type="checkbox"] { margin-right: 8px; transform: scale(1.2); }
-            .bili-ai-skipper-settings-checkbox label { cursor: pointer; }
-
-
+            .bili-ai-skipper-settings-checkbox input[type="checkbox"] { margin-right: 8px; transform: scale(1.1); }
+            .bili-ai-skipper-settings-checkbox label { cursor: pointer; font-size: 14px; color: var(--text-primary); }
+    
             .bili-ai-skipper-settings-footer {
                 display: flex; justify-content: space-between; align-items: center;
                 padding: 20px; border-top: 1px solid var(--border-color);
-                background: var(--bg-secondary);
-                flex-shrink: 0; /* 防止脚部被压缩 */
+                background: var(--bg-secondary); flex-shrink: 0;
             }
-
             .bili-ai-skipper-theme-toggle { display: flex; gap: 10px; }
             .bili-ai-skipper-theme-btn {
                 width: 40px; height: 40px; border: 1px solid var(--border-color);
@@ -351,21 +300,50 @@
                 justify-content: center; font-size: 18px;
             }
             .bili-ai-skipper-theme-btn:hover { border-color: var(--primary-color); transform: scale(1.05); }
-
             .bili-ai-skipper-settings-actions { display: flex; gap: 10px; }
             .bili-ai-skipper-settings-btn-primary,
-            .bili-ai-skipper-settings-btn-secondary {
+            .bili-ai-skipper-settings-btn-secondary,
+            .bili-ai-skipper-list-add-btn {
                 padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;
                 font-size: 14px; font-weight: 500; transition: all 0.2s ease;
             }
-            .bili-ai-skipper-settings-btn-primary { background: var(--primary-color); color: white; }
-            .bili-ai-skipper-settings-btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+            .bili-ai-skipper-settings-btn-primary,
+            .bili-ai-skipper-list-add-btn {
+                background: var(--primary-color); color: white;
+            }
+            .bili-ai-skipper-settings-btn-primary:hover,
+            .bili-ai-skipper-list-add-btn:hover {
+                background: var(--primary-hover); transform: translateY(-1px);
+            }
             .bili-ai-skipper-settings-btn-secondary {
                 background: var(--bg-primary); color: var(--text-primary);
                 border: 1px solid var(--border-color);
             }
             .bili-ai-skipper-settings-btn-secondary:hover { background: var(--bg-secondary); }
-
+    
+            /* 列表管理 (白名单/黑名单) */
+            .bili-ai-skipper-list-container { margin-top: 10px; }
+            .bili-ai-skipper-list-input { display: flex; margin-bottom: 10px; }
+            .bili-ai-skipper-list-input input[type="text"] { flex-grow: 1; margin-right: 10px; }
+            .bili-ai-skipper-list-add-btn { padding: 0 15px; height: auto; line-height: normal; } /* Adjust height if needed */
+            .bili-ai-skipper-list-items {
+                max-height: 150px; overflow-y: auto; border: 1px solid var(--border-color);
+                border-radius: 4px; padding: 5px; background: var(--bg-primary);
+            }
+            .bili-ai-skipper-list-item {
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 8px 5px; border-bottom: 1px solid var(--border-color);
+                color: var(--text-primary);
+            }
+            .bili-ai-skipper-list-item:last-child { border-bottom: none; }
+            .bili-ai-skipper-list-item span { flex-grow: 1; word-break: break-all; margin-right: 10px; }
+            .bili-ai-skipper-list-remove-btn {
+                background: none; border: none; color: var(--danger-color); cursor: pointer;
+                font-size: 18px; padding: 0 5px; flex-shrink: 0;
+            }
+            .bili-ai-skipper-list-remove-btn:hover { color: var(--danger-hover); }
+    
+    
             /* 结果弹窗 */
             .bili-ai-skipper-result-popup {
                 position: fixed; bottom: 20px; right: 20px; width: 350px;
@@ -374,35 +352,84 @@
                 overflow: hidden; animation: slideInUp 0.3s ease;
                 border: 1px solid var(--border-color);
             }
-            /* ... (结果弹窗其他样式保持不变) ... */
-
+            .bili-ai-skipper-result-popup.dark-theme { /* Ensure popup itself gets dark theme vars */
+                background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);
+            }
+            @keyframes slideInUp {
+                from { transform: translateY(100%); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            .bili-ai-skipper-result-popup .header {
+                background: var(--primary-color); color: white;
+                padding: 10px 15px; display: flex; justify-content: space-between;
+                align-items: center; cursor: move;
+            }
+            .bili-ai-skipper-result-popup .title { font-weight: 600; font-size: 14px; }
+            .bili-ai-skipper-result-popup .close-btn {
+                background: none; border: none; color: white; font-size: 20px;
+                cursor: pointer; padding: 0; width: 24px; height: 24px;
+                border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                transition: all 0.2s ease; line-height: 1;
+            }
+            .bili-ai-skipper-result-popup .close-btn:hover { background: rgba(255, 255, 255, 0.2); }
+            .bili-ai-skipper-result-popup .content {
+                padding: 15px; font-size: 13px; line-height: 1.6; color: var(--text-primary);
+            }
+            .bili-ai-skipper-result-popup .content p { margin: 0 0 10px 0; }
+            .bili-ai-skipper-result-popup .content p strong { color: var(--text-primary); }
+            .bili-ai-skipper-result-popup .footer {
+                padding: 10px 15px; border-top: 1px solid var(--border-color);
+                background: var(--bg-secondary);
+            }
+            .bili-ai-skipper-result-popup .footer label {
+                display: flex; align-items: center; font-size: 13px;
+                color: var(--text-secondary); cursor: pointer;
+            }
+            .bili-ai-skipper-result-popup .footer input[type="checkbox"] { margin-right: 8px; transform: scale(1.1); }
+            .bili-ai-skipper-result-popup .raw-response {
+                background: var(--bg-secondary); border: 1px solid var(--border-color);
+                border-radius: 4px; padding: 10px; font-family: monospace;
+                font-size: 11px; white-space: pre-wrap; word-break: break-all;
+                max-height: 150px; overflow-y: auto; margin-top: 8px;
+                color: var(--text-secondary);
+            }
+            .bili-ai-skipper-result-popup details { margin-top: 10px; }
+            .bili-ai-skipper-result-popup summary {
+                cursor: pointer; font-size: 12px; color: var(--text-secondary);
+                margin-bottom: 5px; font-weight: 500;
+            }
+            .bili-ai-skipper-result-popup summary:hover { color: var(--text-primary); }
+            .bili-ai-skipper-result-popup.error .header { background-color: var(--danger-color); }
+    
+    
             /* 模型下拉框 */
             .bili-ai-skipper-model-container { position: relative; }
             .bili-ai-skipper-model-dropdown {
                 position: absolute; top: 100%; left: 0; right: 0;
                 background: var(--bg-primary); border: 1px solid var(--border-color);
                 border-top: none; border-radius: 0 0 6px 6px; max-height: 200px;
-                overflow-y: auto; z-index: 1000;
+                overflow-y: auto; z-index: 1000; box-shadow: var(--shadow);
             }
             .bili-ai-skipper-model-option {
                 padding: 10px 12px; cursor: pointer; transition: background 0.2s ease;
-                font-size: 14px;
+                font-size: 14px; color: var(--text-primary);
             }
             .bili-ai-skipper-model-option:hover { background: var(--bg-secondary); }
-
+    
             /* 首次使用模态框 */
             .bili-ai-skipper-first-time-modal {
                 position: fixed; top: 0; left: 0; width: 100%; height: 100%;
                 background: rgba(0, 0, 0, 0.7); z-index: 10003;
                 display: flex; align-items: center; justify-content: center;
             }
-            .bili-ai-skipper-first-time-modal.dark-theme .bili-ai-skipper-first-time-content {
-                 /* Variables should handle this if content uses them */
-            }
             .bili-ai-skipper-first-time-content {
                 background: var(--bg-primary); color: var(--text-primary);
                 border-radius: 12px; padding: 30px; max-width: 500px; width: 90%;
                 text-align: center; box-shadow: var(--shadow-lg);
+            }
+            /* Ensure dark theme applies to first time content */
+            .bili-ai-skipper-first-time-modal.dark-theme .bili-ai-skipper-first-time-content {
+                background: var(--bg-primary); color: var(--text-primary);
             }
             .bili-ai-skipper-first-time-title {
                 font-size: 24px; font-weight: 600; margin-bottom: 20px;
@@ -410,8 +437,9 @@
             }
             .bili-ai-skipper-first-time-description {
                 font-size: 16px; line-height: 1.6; margin-bottom: 25px;
-                color: var(--text-primary);
+                color: var(--text-primary); text-align: left;
             }
+            .bili-ai-skipper-first-time-description strong { color: var(--text-primary); }
             .bili-ai-skipper-first-time-input {
                 width: 100%; padding: 12px; border: 1px solid var(--border-color);
                 border-radius: 6px; font-size: 14px; margin-bottom: 20px;
@@ -426,10 +454,14 @@
             }
             .bili-ai-skipper-first-time-btn:disabled { background: var(--text-secondary); cursor: not-allowed; }
             .bili-ai-skipper-first-time-btn:not(:disabled):hover { background: var(--primary-hover); transform: translateY(-1px); }
-
+    
             /* 自定义OpenAI选项组 */
             #custom-openai-options-group .bili-ai-skipper-settings-checkbox {
-                margin-left: 10px; /* немного отступ для вложенности */
+                margin-left: 10px; /* Indent custom options */
+                margin-top: 10px;
+            }
+            #custom-openai-options-group .bili-ai-skipper-settings-checkbox:first-child {
+                margin-top: 15px; /* More space before the first custom checkbox */
             }
         `;
         document.head.appendChild(style);
