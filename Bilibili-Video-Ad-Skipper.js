@@ -1,10 +1,9 @@
 // ==UserScript==
-// ==UserScript==
 // @name         Bilibili Ad Skipper (AI Powered)
 // @namespace    http://tampermonkey.net/
-// @version      2.3
+// @version      2.7
 // @description  Uses an AI agent to analyze Bilibili danmaku and comments, detect ad segments with probability, and automatically skip them. Enhanced with probability mechanism and comment analysis.
-// @author       StarsWhere
+// @author       StarsWhere (Modified by Gemini)
 // @match        https://www.bilibili.com/video/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
@@ -45,7 +44,7 @@
         anthropic: {
             defaultUrl: 'https://api.anthropic.com/v1',
             needsUrl: false,
-            models: ['claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307']
+            models: ['claude-3-5-sonnet-20240620', 'claude-3-haiku-20240307']
         },
         custom: {
             defaultUrl: '',
@@ -62,46 +61,74 @@
         baseUrl: '',
         apiKey: '',
         model: '',
-        enableR1Params: false, // 新增: 针对自定义OpenAI
-        useLegacyOpenAIFormat: false, // 新增: 针对自定义OpenAI
+        enableR1Params: false,
+        useLegacyOpenAIFormat: false,
         defaultSkip: true,
         probabilityThreshold: 70,
         durationPenalty: 5,
         minAdDuration: 30,
         maxAdDuration: 300,
         maxDanmakuCount: 500,
-        minDanmakuForFullAnalysis: 100,
-        enableWhitelist: false,
+        minDanmakuForFullAnalysis: 50,
+        enableWhitelist: true,
         whitelistRegex: false,
-        whitelist: [],
-        enableBlacklist: false,
+        whitelist: [
+            '分', '秒', ':', '.', '空降', '指路', '感谢', '君', '跳过', '广告', '快进',
+            '坐标', '时间', '分钟', '开始', '结束', '进度', '节点', '推广', '赞助',
+            '商务', '合作', '链接', '购买', '优惠', '折扣'
+        ],
+        enableBlacklist: true,
         blacklistRegex: false,
-        blacklist: [],
-        agentPrompt: `你是一个专业的弹幕分析专家，需要分析B站视频弹幕来判断是否存在广告内容。
+        blacklist: ['正片', '省流', '总结', '回顾', '分享'],
+        // 更改: 最新的默认提示词
+        agentPrompt: `### Agent Prompt (提示词)
+**角色 (Role):**
+你是一个智能agent,专门分析Bilibili视频的弹幕以检测其中包含的商业广告(硬广)时间段。
 
-分析任务：
-1. 仔细分析提供的弹幕内容
-2. 判断是否有广告相关的内容
-3. 如果有广告，确定广告的开始和结束时间
+**任务 (Task):**
+你收到的内容包含两部分:
+1. 经过整理后的弹幕文本,格式为 \`MM:SS\` 或 \`HH:MM:SS\`
+2. 视频的第一条评论内容及其状态(是否为置顶评论)
+你的核心任务是根据这些信息,判断视频是否含有广告,确定广告的时间段,并给出广告概率评估。
 
-广告识别标准：
-- 明确的商品推广、购买链接
-- 重复出现的商业宣传内容
-- 明显的营销话术
-- 与视频主题无关的商业内容
+**工作流程与逻辑 (Workflow & Logic):**
+**识别广告标记弹幕**:
+   - 寻找"时间跳转"或"广告提示"类弹幕。
+   - 常见模式:\`X分Y秒\`, \`X:Y\`, \`X.Y\`, \`感谢XX君\`, \`空降坐标\`, \`指路牌\`, \`xx秒后\`等。
+   - 注意:忽略含有"正片"、"省流"的弹幕,这些通常指向正常内容, 弹幕不会存在商业推广内容，你只是需要评估是否有类似\`路标\`的弹幕存在即可
 
-时间格式识别：
-- 支持 MM:SS 和 HH:MM:SS 格式
-- 支持纯数字秒数
-- 注意区分时间戳和其他数字
+3. **广告概率评估标准**:
+   - **90-100%**: 多条弹幕指向同一时间点。
+   - **70-89%**: 复数弹幕指向同一时间点,模式明确,即使评论无广告信息。
+   - **50-69%**: 存在弹幕指向时间点,但模式相对明确。
+   - **30-49%**: 弹幕证据较弱,但存在一些可疑指向。
+   - **10-29%**: 非常微弱的证据。
+   - **0-9%**: 基本无广告证据。
 
-请以JSON格式返回结果：
+4. **时间确定**:
+   - **广告结束时间**: 弹幕指向的目标时间点。
+   - **广告开始时间**: 指向该时间的最早弹幕的发送时间戳。
+
+5. **处理无广告情况**:
+   - 如果弹幕中的数字都是描述性的,且没有明确的时间跳转指示。
+
+**输出格式 (Output Format):**
+统一返回以下JSON格式:
 {
   "probability": 数字(0-100, 表示广告存在的概率),
   "start": "开始时间(格式: MM:SS 或 HH:MM:SS, 如果没有则为null)",
   "end": "结束时间(格式: MM:SS 或 HH:MM:SS, 如果没有则为null)",
   "note": "分析说明"
-}`
+}
+
+**注意事项**:
+- probability: 0-100的整数,表示广告概率百分比。
+- start/end: 当probability >= 30时必须提供,否则可为null。
+- note: 必须详细说明判断依据。
+- 输出必须是纯JSON,不包含任何其他文本或markdown标记。
+
+**最终指令 (Final Instruction):**
+你的输出**必须且只能是**一个纯粹的、格式正确的JSON对象。**绝对禁止**包含任何JSON之外的文本。`
     };
 
     // --- STYLES (样式定义) ---
@@ -164,10 +191,6 @@
             .bili-ai-skipper-floating-btn img {
                 width: 24px;
                 height: 24px;
-                /* filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%); */
-            }
-            .bili-ai-skipper-floating-btn.dark-theme img {
-                /* filter: brightness(0) saturate(100%) invert(100%); */
             }
     
             /* Toast 消息 */
@@ -194,11 +217,11 @@
     
             .bili-ai-skipper-settings-modal {
                 background: var(--bg-primary); color: var(--text-primary);
-                border-radius: 12px; width: 90%; max-width: 800px; height: 700px;
+                border-radius: 12px; width: 90%; max-width: 900px; height: 800px;
                 display: flex; flex-direction: column; box-shadow: var(--shadow-lg);
                 animation: slideInDown 0.3s ease; overflow: hidden;
             }
-            .bili-ai-skipper-settings-modal.dark-theme { /* Ensure modal itself gets dark theme vars */
+            .bili-ai-skipper-settings-modal.dark-theme {
                 background: var(--bg-primary); color: var(--text-primary);
             }
             @keyframes slideInDown {
@@ -272,7 +295,7 @@
                 box-shadow: 0 0 0 2px rgba(0, 174, 236, 0.2);
             }
             .bili-ai-skipper-settings-textarea {
-                width: 100%; min-height: 200px; padding: 12px;
+                width: 100%; min-height: 440px; padding: 12px;
                 border: 1px solid var(--border-color); border-radius: 6px;
                 background: var(--bg-primary); color: var(--text-primary);
                 font-size: 14px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -325,7 +348,7 @@
             .bili-ai-skipper-list-container { margin-top: 10px; }
             .bili-ai-skipper-list-input { display: flex; margin-bottom: 10px; }
             .bili-ai-skipper-list-input input[type="text"] { flex-grow: 1; margin-right: 10px; }
-            .bili-ai-skipper-list-add-btn { padding: 0 15px; height: auto; line-height: normal; } /* Adjust height if needed */
+            .bili-ai-skipper-list-add-btn { padding: 0 15px; height: auto; line-height: normal; }
             .bili-ai-skipper-list-items {
                 max-height: 150px; overflow-y: auto; border: 1px solid var(--border-color);
                 border-radius: 4px; padding: 5px; background: var(--bg-primary);
@@ -352,7 +375,7 @@
                 overflow: hidden; animation: slideInUp 0.3s ease;
                 border: 1px solid var(--border-color);
             }
-            .bili-ai-skipper-result-popup.dark-theme { /* Ensure popup itself gets dark theme vars */
+            .bili-ai-skipper-result-popup.dark-theme {
                 background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);
             }
             @keyframes slideInUp {
@@ -427,7 +450,6 @@
                 border-radius: 12px; padding: 30px; max-width: 500px; width: 90%;
                 text-align: center; box-shadow: var(--shadow-lg);
             }
-            /* Ensure dark theme applies to first time content */
             .bili-ai-skipper-first-time-modal.dark-theme .bili-ai-skipper-first-time-content {
                 background: var(--bg-primary); color: var(--text-primary);
             }
@@ -457,18 +479,17 @@
     
             /* 自定义OpenAI选项组 */
             #custom-openai-options-group .bili-ai-skipper-settings-checkbox {
-                margin-left: 10px; /* Indent custom options */
+                margin-left: 10px;
                 margin-top: 10px;
             }
             #custom-openai-options-group .bili-ai-skipper-settings-checkbox:first-child {
-                margin-top: 15px; /* More space before the first custom checkbox */
+                margin-top: 15px;
             }
         `;
         document.head.appendChild(style);
     };
 
     // --- UTILITY FUNCTIONS (工具函数) ---
-    // ... (showToast, makeDraggable, timeStringToSeconds - 保持不变) ...
     const showToast = (message, duration = 3000) => {
         const settings = GM_getValue('ai_settings', DEFAULT_SETTINGS);
 
@@ -532,7 +553,7 @@
 
     const timeStringToSeconds = (timeStr) => {
         if (!timeStr) return 0;
-        const parts = timeStr.split(':').map(Number);
+        const parts = String(timeStr).split(':').map(Number);
         if (parts.length === 2) {
             return parts[0] * 60 + parts[1];
         } else if (parts.length === 3) {
@@ -541,8 +562,20 @@
         return parseInt(timeStr) || 0;
     };
 
+    const secondsToTimeString = (seconds) => {
+        seconds = Math.floor(seconds);
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        const pad = (num) => String(num).padStart(2, '0');
+        if (h > 0) {
+            return `${pad(h)}:${pad(m)}:${pad(s)}`;
+        }
+        return `${pad(m)}:${pad(s)}`;
+    };
+
+
     // --- API FUNCTIONS (API 函数) ---
-    // ... (getVideoInfo, getDanmakuXml, getTopComment, parseAndFilterDanmaku - 保持不变) ...
     const getVideoInfo = (bvid) => {
         return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
@@ -578,15 +611,40 @@
 
     const getTopComment = () => {
         return new Promise((resolve) => {
-            try {
-                const commentElement = document.querySelector('.reply-item .reply-content .reply-con');
-                const comment = commentElement ? commentElement.textContent.trim() : '';
-                resolve(comment);
-            } catch (error) {
-                resolve('');
-            }
+            setTimeout(() => {
+                try {
+                    const firstReplyItem = document.querySelector('.reply-list .root-reply-container');
+                    if (!firstReplyItem) {
+                        resolve({ text: '', status: '不存在置顶评论' });
+                        return;
+                    }
+
+                    const commentContentElement = firstReplyItem.querySelector('.reply-content .reply-con');
+                    const commentText = commentContentElement ? commentContentElement.textContent.trim() : '';
+
+                    const isPinned = firstReplyItem.querySelector('.reply-tag .top-badge');
+
+                    if (isPinned) {
+                        if (commentText) {
+                            resolve({ text: commentText, status: '存在置顶评论，内容如下：' });
+                        } else {
+                            resolve({ text: '', status: '存在置顶评论，但未能成功获取其内容。' });
+                        }
+                    } else {
+                        if (commentText) {
+                            resolve({ text: commentText, status: '不存在置顶评论，首条评论内容为：' });
+                        } else {
+                            resolve({ text: '', status: '不存在置顶评论' });
+                        }
+                    }
+                } catch (error) {
+                    console.error("获取评论失败:", error);
+                    resolve({ text: '', status: '获取评论时发生错误。' });
+                }
+            }, 2000);
         });
     };
+
 
     const parseAndFilterDanmaku = (xmlString) => {
         const parser = new DOMParser();
@@ -605,24 +663,6 @@
             };
         }).filter(d => d.text.length > 0);
 
-        // 白名单过滤
-        if (settings.enableWhitelist && settings.whitelist.length > 0) {
-            filteredDanmakus = filteredDanmakus.filter(d => {
-                return settings.whitelist.some(pattern => {
-                    if (settings.whitelistRegex) {
-                        try {
-                            return new RegExp(pattern, 'i').test(d.text);
-                        } catch (e) {
-                            return d.text.toLowerCase().includes(pattern.toLowerCase());
-                        }
-                    } else {
-                        return d.text.toLowerCase().includes(pattern.toLowerCase());
-                    }
-                });
-            });
-        }
-
-        // 黑名单过滤
         if (settings.enableBlacklist && settings.blacklist.length > 0) {
             filteredDanmakus = filteredDanmakus.filter(d => {
                 return !settings.blacklist.some(pattern => {
@@ -639,7 +679,22 @@
             });
         }
 
-        // 如果弹幕数量不足，启用简单过滤
+        if (settings.enableWhitelist && settings.whitelist.length > 0) {
+            filteredDanmakus = filteredDanmakus.filter(d => {
+                return settings.whitelist.some(pattern => {
+                    if (settings.whitelistRegex) {
+                        try {
+                            return new RegExp(pattern, 'i').test(d.text);
+                        } catch (e) {
+                            return d.text.toLowerCase().includes(pattern.toLowerCase());
+                        }
+                    } else {
+                        return d.text.toLowerCase().includes(pattern.toLowerCase());
+                    }
+                });
+            });
+        }
+
         if (filteredDanmakus.length < settings.minDanmakuForFullAnalysis) {
             const simplePatterns = ['广告', '推广', '商品', '购买', '链接', '淘宝', '京东'];
             const hasAdKeywords = filteredDanmakus.some(d =>
@@ -647,24 +702,26 @@
             );
 
             if (!hasAdKeywords) {
-                showToast('弹幕数量过少且无明显广告标识', 3000);
+                showToast('过滤后有效弹幕过少且无明显广告标识, 跳过分析', 3000);
                 return null;
             }
         }
 
-        // 限制弹幕数量
         if (filteredDanmakus.length > settings.maxDanmakuCount) {
+            for (let i = filteredDanmakus.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [filteredDanmakus[i], filteredDanmakus[j]] = [filteredDanmakus[j], filteredDanmakus[i]];
+            }
             filteredDanmakus = filteredDanmakus.slice(0, settings.maxDanmakuCount);
         }
 
-        // 按时间排序并格式化
         return filteredDanmakus
             .sort((a, b) => a.time - b.time)
-            .map(d => `${Math.floor(d.time)}s: ${d.text}`)
+            .map(d => `${secondsToTimeString(d.time)} ${d.text}`)
             .join('\n');
     };
 
-    const callAI = async (danmakuText, topComment) => {
+    const callAI = async (danmakuText, topCommentString) => {
         const settings = GM_getValue('ai_settings', DEFAULT_SETTINGS);
 
         if (!settings.apiKey) {
@@ -674,9 +731,10 @@
         const provider = API_PROVIDERS[settings.apiProvider];
         const baseUrl = settings.baseUrl || provider.defaultUrl;
 
+        const userMessage = `弹幕内容：\n${danmakuText}\n\n评论区情况：\n${topCommentString || '无'}`;
+
         let requestBody, headers, url;
 
-        // 基础 OpenAI 兼容格式
         headers = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${settings.apiKey}`
@@ -686,18 +744,18 @@
             model: settings.model,
             messages: [
                 { role: 'system', content: settings.agentPrompt },
-                { role: 'user', content: `弹幕内容：\n${danmakuText}\n\n置顶评论：${topComment || '无'}` }
+                { role: 'user', content: userMessage }
             ],
             temperature: 0.3
         };
 
         if (settings.apiProvider === 'gemini') {
             url = `${baseUrl}/models/${settings.model}:generateContent?key=${settings.apiKey}`;
-            headers = { 'Content-Type': 'application/json' }; // Gemini不需要Authorization Bearer
+            headers = { 'Content-Type': 'application/json' };
             requestBody = {
                 contents: [{
                     parts: [{
-                        text: `${settings.agentPrompt}\n\n弹幕内容：\n${danmakuText}\n\n置顶评论：${topComment || '无'}`
+                        text: `${settings.agentPrompt}\n\n${userMessage}`
                     }]
                 }]
             };
@@ -710,28 +768,19 @@
             };
             requestBody = {
                 model: settings.model,
-                max_tokens: 1000, // Anthropic 需要 max_tokens
-                messages: [{
-                    role: 'user',
-                    content: `${settings.agentPrompt}\n\n弹幕内容：\n${danmakuText}\n\n置顶评论：${topComment || '无'}`
-                }]
+                max_tokens: 1024,
+                messages: [
+                    { role: 'user', content: `${settings.agentPrompt}\n\n${userMessage}` }
+                ]
             };
         } else if (settings.apiProvider === 'custom') {
             if (settings.useLegacyOpenAIFormat) {
-                // TODO: 用户需要根据其“传统OpenAI API格式”的具体实现来调整这里的url和requestBody
-                // 例如，可能是 /v1/completions 端点，并且请求体不同
-                // url = `${baseUrl}/completions`; // 示例
-                // requestBody = { prompt: `...`, model: settings.model, ... }; // 示例
-                showToast("传统OpenAI API格式的自定义逻辑尚未完全实现，请在代码中修改callAI函数。", 5000);
+                showToast("传统OpenAI API格式的自定义逻辑尚未完全实现。", 5000);
             }
             if (settings.enableR1Params) {
-                // TODO: 用户需要根据其“R1模型参数”的具体需求来调整请求或处理响应
-                // 例如，可能需要在请求体中添加特定参数，或处理不同的响应结构
-                showToast("R1模型参数的自定义逻辑尚未完全实现，请在代码中修改callAI函数。", 5000);
+                showToast("R1模型参数的自定义逻辑尚未完全实现。", 5000);
             }
-            // 如果没有特定自定义格式，默认使用OpenAI兼容格式 (已在函数开头设置)
         }
-
 
         return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
@@ -748,7 +797,7 @@
                             content = data.candidates?.[0]?.content?.parts?.[0]?.text;
                         } else if (settings.apiProvider === 'anthropic') {
                             content = data.content?.[0]?.text;
-                        } else { // OpenAI, Deepseek, Custom (defaulting to OpenAI compatible)
+                        } else {
                             content = data.choices?.[0]?.message?.content;
                         }
 
@@ -758,8 +807,8 @@
                         }
 
                         let jsonStr = content.trim();
-                        if (jsonStr.startsWith('```json') || jsonStr.startsWith('`json')) {
-                            jsonStr = jsonStr.replace(/^```?json\s*\n?/, '').replace(/\n?```?$/, '');
+                        if (jsonStr.startsWith('```json')) {
+                            jsonStr = jsonStr.replace(/^```json\s*\n?/, '').replace(/\n?```$/, '');
                         } else if (jsonStr.startsWith('```')) {
                             jsonStr = jsonStr.replace(/^```\s*\n?/, '').replace(/\n?```$/, '');
                         }
@@ -771,10 +820,8 @@
                             const result = JSON.parse(jsonStr);
                             resolve(result);
                         } catch (parseError) {
-                            console.error('JSON解析失败:', parseError);
-                            console.error('原始响应文本:', response.responseText);
-                            console.error('尝试解析的JSON字符串:', jsonStr);
-                            throw new Error(`解析AI响应失败: ${parseError.message}. 原始响应: ${response.responseText.substring(0, 200)}...`);
+                            console.error('JSON解析失败:', parseError, '原始响应:', content);
+                            throw new Error(`解析AI响应失败: ${parseError.message}. 原始响应: ${content.substring(0, 200)}...`);
                         }
                     } catch (error) {
                         reject(error);
@@ -785,12 +832,10 @@
         });
     };
 
-    // ... (calculateFinalProbability, showResultPopup, waitForElement, main - 保持不变) ...
     const calculateFinalProbability = (aiResult, settings) => {
         let finalProbability = aiResult.probability || 0;
         let adjustmentNote = '';
 
-        // 时长惩罚
         if (aiResult.start && aiResult.end) {
             const startSeconds = timeStringToSeconds(aiResult.start);
             const endSeconds = timeStringToSeconds(aiResult.end);
@@ -816,7 +861,7 @@
         };
     };
 
-    const showResultPopup = (result) => {
+    const showResultPopup = (result, danmakuSentToAI, commentStringSentToAI) => {
         const settings = GM_getValue('ai_settings', DEFAULT_SETTINGS);
 
         const popup = document.createElement('div');
@@ -824,6 +869,17 @@
         if (settings.theme === 'dark') {
             popup.classList.add('dark-theme');
         }
+
+        const escapeHtml = (unsafe) => {
+            if (typeof unsafe !== 'string') {
+                unsafe = String(unsafe || '');
+            }
+            const tempDiv = document.createElement('div');
+            tempDiv.textContent = unsafe;
+            return tempDiv.innerHTML;
+        };
+
+        const formattedDanmakuAndComment = `【评论区情况】\n${commentStringSentToAI || '无'}\n\n【发送给AI的弹幕列表】\n${danmakuSentToAI || '无'}`;
 
         popup.innerHTML = `
             <div class="header">
@@ -833,13 +889,19 @@
             <div class="content">
                 <p><strong>广告概率:</strong> ${result.finalProbability}%</p>
                 ${result.start && result.end ? `
-                    <p><strong>广告时间:</strong> ${result.start} - ${result.end}</p>
+                    <p><strong>广告时间:</strong> ${escapeHtml(result.start)} - ${escapeHtml(result.end)}</p>
                 ` : ''}
-                <p><strong>分析说明:</strong> ${result.note || '无'}</p>
-                <p><strong>概率调整:</strong> ${result.adjustmentNote || '无'}</p>
+                <p><strong>分析说明:</strong> ${escapeHtml(result.note) || '无'}</p>
+                <p><strong>概率调整:</strong> ${escapeHtml(result.adjustmentNote) || '无'}</p>
+                
+                <details>
+                    <summary>查看发送给AI的内容</summary>
+                    <div class="raw-response">${escapeHtml(formattedDanmakuAndComment)}</div>
+                </details>
+
                 <details>
                     <summary>查看原始AI响应</summary>
-                    <div class="raw-response">${JSON.stringify(result, null, 2)}</div>
+                    <div class="raw-response">${escapeHtml(JSON.stringify(result, null, 2))}</div>
                 </details>
             </div>
             <div class="footer">
@@ -864,12 +926,14 @@
 
     const waitForElement = (selector) => {
         return new Promise(resolve => {
-            if (document.querySelector(selector)) {
-                return resolve(document.querySelector(selector));
+            const el = document.querySelector(selector);
+            if (el) {
+                return resolve(el);
             }
             const observer = new MutationObserver(() => {
-                if (document.querySelector(selector)) {
-                    resolve(document.querySelector(selector));
+                const el = document.querySelector(selector);
+                if (el) {
+                    resolve(el);
                     observer.disconnect();
                 }
             });
@@ -892,51 +956,52 @@
             const bvid = bvidMatch[1];
 
             const cid = await getVideoInfo(bvid);
-            const [danmakuXml, topComment] = await Promise.all([
+            const [danmakuXml, topCommentInfo] = await Promise.all([
                 getDanmakuXml(cid),
                 getTopComment()
             ]);
 
             const danmakuText = parseAndFilterDanmaku(danmakuXml);
             if (!danmakuText) {
-                showToast('有效弹幕过少,跳过AI分析', 3000);
                 return;
             }
 
-            const aiResult = await callAI(danmakuText, topComment);
+            const topCommentString = topCommentInfo.status + (topCommentInfo.text ? `\n${topCommentInfo.text}` : '');
+            const aiResult = await callAI(danmakuText, topCommentString);
             const settings = GM_getValue('ai_settings', DEFAULT_SETTINGS);
             const finalResult = calculateFinalProbability(aiResult, settings);
 
-            showResultPopup(finalResult);
+            showResultPopup(finalResult, danmakuText, topCommentString);
 
             if (finalResult.finalProbability >= settings.probabilityThreshold && settings.defaultSkip && finalResult.end) {
                 const videoPlayer = await waitForElement('video');
                 const endTime = timeStringToSeconds(finalResult.end);
 
                 const checkTime = setInterval(() => {
-                    if (videoPlayer.currentTime < endTime) { // 确保只在广告结束前操作
-                        if (videoPlayer.currentTime > (timeStringToSeconds(finalResult.start) || 0)) { // 确保在广告开始后
+                    if (videoPlayer.currentTime < endTime) {
+                        const startTime = timeStringToSeconds(finalResult.start) || 0;
+                        if (videoPlayer.currentTime >= startTime && videoPlayer.currentTime < endTime) {
                             showToast(`将在 ${finalResult.end} 跳过广告`, 2000);
                             videoPlayer.currentTime = endTime;
                             clearInterval(checkTime);
                         }
-                    } else { // 如果当前时间已经超过广告结束时间，也清除定时器
+                    } else {
                         clearInterval(checkTime);
                     }
                 }, 1000);
             }
 
         } catch (error) {
-            console.error('AI广告跳过脚���出错:', error);
+            console.error('视频广告跳过脚本出错:', error);
             showToast(`脚本出错: ${error.message}`, 5000);
 
             const errorPopup = document.createElement('div');
-            errorPopup.className = 'bili-ai-skipper-result-popup error'; // 可添加 error 类用于特殊样式
+            errorPopup.className = 'bili-ai-skipper-result-popup error';
             if (GM_getValue('ai_settings', DEFAULT_SETTINGS).theme === 'dark') {
                 errorPopup.classList.add('dark-theme');
             }
             errorPopup.innerHTML = `
-                <div class="header" style="background-color: var(--danger-color);">
+                <div class="header">
                     <span class="title">脚本错误</span>
                     <span class="close-btn">×</span>
                 </div>
@@ -954,7 +1019,7 @@
 
     // --- FIRST TIME MODAL ---
     const showFirstTimeModal = () => {
-        let currentSettings = GM_getValue('ai_settings', DEFAULT_SETTINGS); // 使用 let
+        let currentSettings = GM_getValue('ai_settings', DEFAULT_SETTINGS);
 
         const modal = document.createElement('div');
         modal.className = 'bili-ai-skipper-first-time-modal';
@@ -964,7 +1029,7 @@
 
         modal.innerHTML = `
             <div class="bili-ai-skipper-first-time-content">
-                <h2 class="bili-ai-skipper-first-time-title">欢迎使用AI广告跳过器</h2>
+                <h2 class="bili-ai-skipper-first-time-title">欢迎使用视频广告跳过器</h2>
                 <div class="bili-ai-skipper-first-time-description">
                     本插件通过AI分析弹幕内容来智能识别广告段落。为了更好的识别效果，建议观众在广告时段发送包含时间戳的弹幕。<br><br>
                     <strong>使用提醒：</strong><br>
@@ -976,7 +1041,7 @@
                     <button class="bili-ai-skipper-theme-btn light" id="ft-theme-light" title="浅色主题">☀</button>
                     <button class="bili-ai-skipper-theme-btn dark" id="ft-theme-dark" title="深色主题">🌙</button>
                 </div>
-                <input type="text" class="bili-ai-skipper-first-time-input" placeholder="请输入: 我已确认理解插件功能,我会尽可能遵循倡导发送坐标弹幕">
+                <input type="text" class="bili-ai-skipper-first-time-input" placeholder="请输入: 我已确认理解插件功能,我会遵循倡导发送坐标弹幕">
                 <div class="bili-ai-skipper-first-time-actions">
                     <button class="bili-ai-skipper-first-time-btn" disabled>确认并继续</button>
                 </div>
@@ -993,16 +1058,16 @@
             ftLightBtn.style.opacity = theme === 'light' ? '1' : '0.5';
             ftDarkBtn.style.opacity = theme === 'dark' ? '1' : '0.5';
             if (theme === 'dark') {
-                modal.classList.add('dark-theme'); ftModalContent.style.background = 'var(--bg-primary)'; // 确保内容区也应用主题
+                modal.classList.add('dark-theme');
+                ftModalContent.style.background = 'var(--bg-primary)';
                 ftModalContent.style.color = 'var(--text-primary)';
             } else {
                 modal.classList.remove('dark-theme');
-                ftModalContent.style.background = ''; // 恢复默认
+                ftModalContent.style.background = '';
                 ftModalContent.style.color = '';
             }
         };
         updateFtThemeVisuals(currentSettings.theme);
-
 
         ftLightBtn.addEventListener('click', () => {
             currentSettings.theme = 'light';
@@ -1015,7 +1080,6 @@
             GM_setValue('ai_settings', currentSettings);
             updateFtThemeVisuals('dark');
         });
-
 
         const input = modal.querySelector('.bili-ai-skipper-first-time-input');
         const btn = modal.querySelector('.bili-ai-skipper-first-time-btn');
@@ -1031,7 +1095,7 @@
                 GM_setValue('ai_settings', currentSettings);
                 modal.remove();
                 showToast('欢迎使用!请先配置API设置。', 3000);
-                location.reload(); // 刷新页面以应用更改并显示设置入口
+                location.reload();
             }
         });
     };
@@ -1040,10 +1104,9 @@
     const createSettingsUI = () => {
         const settings = GM_getValue('ai_settings', DEFAULT_SETTINGS);
 
-        // 检查首次使用
         if (settings.firstTimeUse !== false) {
             showFirstTimeModal();
-            return; // 首次使用时，不创建悬浮按钮，由首次模态框处理后续
+            return;
         }
 
         const floatingBtn = document.createElement('div');
@@ -1097,49 +1160,78 @@
         });
     };
 
+    // 更改: 修复了此函数，现在对所有支持的提供商都尝试获取模型列表
     const fetchModels = async (provider, baseUrl, apiKey) => {
-        // ... (保持不变)
         return new Promise((resolve) => {
-            if (provider === 'custom') {
-                // 对于自定义，不主动获取，让用户输入或从预设中选择
-                resolve(API_PROVIDERS[provider].models.length > 0 ? API_PROVIDERS[provider].models : ['gpt-3.5-turbo', 'gpt-4']);
-                return;
-            }
-
             const providerConfig = API_PROVIDERS[provider];
-            if (providerConfig.models.length > 0 && provider !== 'openai' && provider !== 'deepseek') { // OpenAI和Deepseek可以尝试获取最新
-                resolve(providerConfig.models);
-                return;
-            }
 
-            let modelsUrl = '';
-            if (provider === 'openai' || provider === 'deepseek') {
-                modelsUrl = `${baseUrl}/models`;
-            } else { // 其他如Gemini, Anthropic通常模型列表固定或通过文档获取
-                resolve(providerConfig.models);
-                return;
-            }
+            // 定义哪些提供商支持通过端点动态获取模型
+            const fetchableProviders = ['openai', 'deepseek', 'custom', 'gemini'];
 
-            GM_xmlhttpRequest({
-                method: 'GET',
-                url: modelsUrl,
-                headers: { 'Authorization': `Bearer ${apiKey}` },
-                onload: response => {
-                    try {
-                        const data = JSON.parse(response.responseText);
-                        const models = data.data?.map(m => m.id).filter(id => typeof id === 'string') || [];
-                        resolve(models.length > 0 ? models : providerConfig.models);
-                    } catch (e) {
-                        resolve(providerConfig.models); // 出错时返回预设
+            if (fetchableProviders.includes(provider)) {
+                // 对于这些提供商，必须有API密钥和Base URL才能尝试获取
+                if (!apiKey || !baseUrl) {
+                    resolve(providerConfig.models); // 缺少凭据，返回预设列表
+                    return;
+                }
+
+                let requestConfig = {};
+
+                if (provider === 'gemini') {
+                    // Gemini 使用 API Key 作为 URL 参数
+                    requestConfig = {
+                        method: 'GET',
+                        url: `${baseUrl}/models?key=${apiKey}`,
+                        headers: { 'Content-Type': 'application/json' }
+                    };
+                } else {
+                    // OpenAI, DeepSeek, Custom 使用 Bearer Token
+                    requestConfig = {
+                        method: 'GET',
+                        url: `${baseUrl}/models`,
+                        headers: { 'Authorization': `Bearer ${apiKey}` }
+                    };
+                }
+
+                GM_xmlhttpRequest({
+                    ...requestConfig,
+                    onload: response => {
+                        try {
+                            const data = JSON.parse(response.responseText);
+                            let models = [];
+
+                            if (provider === 'gemini') {
+                                // Gemini 的响应结构是 { "models": [...] }
+                                // 模型ID在 "name" 字段中，格式为 "models/gemini-pro"
+                                models = data.models?.map(m => m.name.replace('models/', ''))
+                                    .filter(id => id.includes('gemini')) // 只保留gemini相关模型
+                                    .sort() || [];
+                            } else {
+                                // OpenAI 兼容的结构是 { "data": [...] }
+                                models = data.data?.map(m => m.id).filter(id => typeof id === 'string').sort() || [];
+                            }
+
+                            resolve(models.length > 0 ? models : providerConfig.models);
+                        } catch (e) {
+                            console.error(`解析 ${provider} 模型列表失败:`, e);
+                            resolve(providerConfig.models); // 解析失败，返回预设
+                        }
+                    },
+                    onerror: (err) => {
+                        console.error(`获取 ${provider} 模型列表失败:`, err);
+                        resolve(providerConfig.models); // 网络错误，返回预设
                     }
-                },
-                onerror: () => resolve(providerConfig.models) // 网络错误时返回预设
-            });
+                });
+
+            } else {
+                // 对于其他提供商（如 Anthropic），它们使用固定的模型列表
+                resolve(providerConfig.models);
+            }
         });
     };
 
     const openSettings = () => {
-        let settings = GM_getValue('ai_settings', DEFAULT_SETTINGS); // 使用let以便在函数内修改主题
+        let settings = GM_getValue('ai_settings', DEFAULT_SETTINGS);
 
         const backdrop = document.createElement('div');
         backdrop.className = 'bili-ai-skipper-settings-backdrop';
@@ -1150,7 +1242,7 @@
         backdrop.innerHTML = `
             <div class="bili-ai-skipper-settings-modal">
                 <div class="bili-ai-skipper-settings-header">
-                    <h2 class="bili-ai-skipper-settings-title">AI广告跳过器设置</h2>
+                    <h2 class="bili-ai-skipper-settings-title">视频广告跳过器设置</h2>
                     <button class="bili-ai-skipper-settings-close">×</button>
                 </div>
                 <div class="bili-ai-skipper-settings-body">
@@ -1160,7 +1252,6 @@
                         <button class="bili-ai-skipper-settings-tab" data-tab="prompt">提示词</button>
                     </div>
                     
-                    <!-- 基础设置 -->
                     <div id="basic-tab" class="bili-ai-skipper-tab-content active">
                         <div class="bili-ai-skipper-settings-section">
                             <h3>API配置</h3>
@@ -1220,21 +1311,23 @@
                         </div>
                     </div>
                     
-                    <!-- 高级设置 -->
                     <div id="advanced-tab" class="bili-ai-skipper-tab-content">
                         <div class="bili-ai-skipper-settings-section">
                             <h3>广告时长限制</h3>
-                            <div class="bili-ai-skipper-settings-group">
-                                <label class="bili-ai-skipper-settings-label">最小广告时长 (秒)</label>
-                                <input type="number" id="min-ad-duration" class="bili-ai-skipper-settings-input" min="1" placeholder="30">
-                            </div>
-                            <div class="bili-ai-skipper-settings-group">
-                                <label class="bili-ai-skipper-settings-label">最大广告时长 (秒)</label>
-                                <input type="number" id="max-ad-duration" class="bili-ai-skipper-settings-input" min="1" placeholder="300">
+                            <div class="bili-ai-skipper-settings-group-inline">
+                                <div>
+                                    <label class="bili-ai-skipper-settings-label">最小广告时长 (秒)</label>
+                                    <input type="number" id="min-ad-duration" class="bili-ai-skipper-settings-input" min="1" placeholder="30">
+                                </div>
+                                <div>
+                                    <label class="bili-ai-skipper-settings-label">最大广告时长 (秒)</label>
+                                    <input type="number" id="max-ad-duration" class="bili-ai-skipper-settings-input" min="1" placeholder="300">
+                                </div>
                             </div>
                             <div class="bili-ai-skipper-settings-group">
                                 <label class="bili-ai-skipper-settings-label">最大弹幕数量 (用于分析)</label>
                                 <input type="number" id="max-danmaku-count" class="bili-ai-skipper-settings-input" min="1" placeholder="500">
+                                <small style="color: var(--text-secondary); font-size: 12px;">当过滤后弹幕数大于此值时, 将随机采样。</small>
                             </div>
                         </div>
                         
@@ -1242,7 +1335,7 @@
                             <h3>弹幕过滤设置</h3>
                             <div class="bili-ai-skipper-settings-group">
                                 <label class="bili-ai-skipper-settings-label">完整分析所需最小弹幕数</label>
-                                <input type="number" id="min-danmaku-full" class="bili-ai-skipper-settings-input" min="1" placeholder="100">
+                                <input type="number" id="min-danmaku-full" class="bili-ai-skipper-settings-input" min="1" placeholder="50">
                                 <small style="color: var(--text-secondary); font-size: 12px;">当有效弹幕数低于此值时, 可能跳过AI分析或使用简化逻辑。</small>
                             </div>
                         </div>
@@ -1251,7 +1344,7 @@
                             <h3>白名单设置</h3>
                             <div class="bili-ai-skipper-settings-checkbox">
                                 <input type="checkbox" id="enable-whitelist">
-                                <label for="enable-whitelist">启用白名单 (包含关键词则不过滤)</label>
+                                <label for="enable-whitelist">启用白名单 (仅分析含白名单关键词的弹幕)</label>
                             </div>
                             <div class="bili-ai-skipper-settings-checkbox">
                                 <input type="checkbox" id="whitelist-regex">
@@ -1270,7 +1363,7 @@
                             <h3>黑名单设置</h3>
                             <div class="bili-ai-skipper-settings-checkbox">
                                 <input type="checkbox" id="enable-blacklist">
-                                <label for="enable-blacklist">启用黑名单 (包含关键词则过滤)</label>
+                                <label for="enable-blacklist">启用黑名单 (过滤掉含黑名单关键词的弹幕)</label>
                             </div>
                             <div class="bili-ai-skipper-settings-checkbox">
                                 <input type="checkbox" id="blacklist-regex">
@@ -1286,7 +1379,6 @@
                         </div>
                     </div>
                     
-                    <!-- 提示词设置 -->
                     <div id="prompt-tab" class="bili-ai-skipper-tab-content">
                         <div class="bili-ai-skipper-settings-section">
                             <h3>AI提示词配置</h3>
@@ -1325,25 +1417,23 @@
         document.getElementById('min-ad-duration').value = settings.minAdDuration || 30;
         document.getElementById('max-ad-duration').value = settings.maxAdDuration || 300;
         document.getElementById('max-danmaku-count').value = settings.maxDanmakuCount || 500;
-        document.getElementById('min-danmaku-full').value = settings.minDanmakuForFullAnalysis || 100;
-        document.getElementById('enable-whitelist').checked = settings.enableWhitelist || false;
+        document.getElementById('min-danmaku-full').value = settings.minDanmakuForFullAnalysis || 50;
+        document.getElementById('enable-whitelist').checked = settings.enableWhitelist !== false;
         document.getElementById('whitelist-regex').checked = settings.whitelistRegex || false;
-        document.getElementById('enable-blacklist').checked = settings.enableBlacklist || false;
+        document.getElementById('enable-blacklist').checked = settings.enableBlacklist !== false;
         document.getElementById('blacklist-regex').checked = settings.blacklistRegex || false;
         document.getElementById('agent-prompt').value = settings.agentPrompt || DEFAULT_SETTINGS.agentPrompt;
 
-        // 更新主题按钮状态
         const updateThemeButtons = (theme) => {
             const lightBtn = document.getElementById('theme-light');
             const darkBtn = document.getElementById('theme-dark');
-            if (lightBtn && darkBtn) { // 确保按钮存在
+            if (lightBtn && darkBtn) {
                 lightBtn.style.opacity = theme === 'light' ? '1' : '0.5';
                 darkBtn.style.opacity = theme === 'dark' ? '1' : '0.5';
             }
         };
         updateThemeButtons(settings.theme);
 
-        // API 提供商和自定义选项的显示逻辑
         const apiProviderSelect = document.getElementById('api-provider');
         const baseUrlGroup = document.getElementById('base-url-group');
         const customOpenAIOptionsGroup = document.getElementById('custom-openai-options-group');
@@ -1351,41 +1441,33 @@
         const updateApiProviderUI = () => {
             const provider = apiProviderSelect.value;
             const providerConfig = API_PROVIDERS[provider];
-
             baseUrlGroup.style.display = providerConfig.needsUrl ? 'block' : 'none';
             if (!providerConfig.needsUrl) {
                 document.getElementById('base-url').value = providerConfig.defaultUrl;
+            } else if (!document.getElementById('base-url').value && provider === 'custom') {
+                document.getElementById('base-url').value = '';
             }
             customOpenAIOptionsGroup.style.display = provider === 'custom' ? 'block' : 'none';
         };
 
         apiProviderSelect.addEventListener('change', updateApiProviderUI);
-        updateApiProviderUI(); // 初始化时调用
+        updateApiProviderUI();
 
-        // 模型选择处理
         const modelInput = document.getElementById('model');
         const modelDropdown = document.getElementById('model-dropdown');
-        let currentModels = [];
 
         const updateModelDropdown = async () => {
             const provider = apiProviderSelect.value;
-            const baseUrl = document.getElementById('base-url').value || API_PROVIDERS[provider]?.defaultUrl;
-            const apiKey = document.getElementById('api-key').value;
-
-            // 如果是自定义提供商，且没有API Key，则不主动获取模型
-            if (provider === 'custom' && !apiKey) {
-                currentModels = API_PROVIDERS[provider].models; // 使用预设或空
-            } else if (apiKey || !API_PROVIDERS[provider]?.needsUrl) { // 有API Key 或 不需要URL(如官方OpenAI等)
-                showToast('正在获取模型列表...', 1500);
-                try {
-                    currentModels = await fetchModels(provider, baseUrl, apiKey);
-                } catch (error) {
-                    console.warn("获取模型列表失败:", error);
-                    currentModels = API_PROVIDERS[provider]?.models || [];
-                }
-            } else { // 其他情况（比如自定义但没填key）
-                currentModels = API_PROVIDERS[provider]?.models || [];
+            // 确保切换到自定义时，如果用户没有输入，baseUrl是空的，而不是继承上一个提供商的默认值
+            let baseUrl = document.getElementById('base-url').value;
+            if (provider !== 'custom') {
+                baseUrl = baseUrl || API_PROVIDERS[provider]?.defaultUrl;
             }
+
+            const apiKey = document.getElementById('api-key').value;
+            modelDropdown.innerHTML = '<div class="bili-ai-skipper-model-option" style="color: grey; cursor: wait;">正在获取...</div>';
+
+            const currentModels = await fetchModels(provider, baseUrl, apiKey);
 
             modelDropdown.innerHTML = '';
             if (currentModels.length > 0) {
@@ -1405,20 +1487,22 @@
         };
 
         modelInput.addEventListener('focus', async () => {
-            // 总是尝试更新模型列表，除非下拉框已显示内容
-            if (modelDropdown.style.display === 'none' || modelDropdown.children.length === 0) {
+            if (modelDropdown.style.display === 'none' || !modelDropdown.innerHTML.includes('option')) {
                 await updateModelDropdown();
             }
-            if (modelDropdown.children.length > 0) { // 确保有内容才显示
+            if (modelDropdown.children.length > 0) {
                 modelDropdown.style.display = 'block';
             }
         });
-        modelInput.addEventListener('blur', () => { setTimeout(() => { modelDropdown.style.display = 'none'; }, 200); });
-        apiProviderSelect.addEventListener('change', () => { modelInput.value = ''; updateModelDropdown(); }); // 切换提供商时清空模型并更新
+        document.addEventListener('click', (e) => {
+            if (!modelInput.contains(e.target) && !modelDropdown.contains(e.target)) {
+                modelDropdown.style.display = 'none';
+            }
+        });
+        apiProviderSelect.addEventListener('change', () => { modelInput.value = ''; updateApiProviderUI(); updateModelDropdown(); });
         document.getElementById('api-key').addEventListener('change', updateModelDropdown);
-        document.getElementById('base-url').addEventListener('change', updateModelDropdown); // Base URL改变也可能影响模型列表
+        document.getElementById('base-url').addEventListener('change', updateModelDropdown);
 
-        // 标签页切换
         const tabs = backdrop.querySelectorAll('.bili-ai-skipper-settings-tab');
         const contents = backdrop.querySelectorAll('.bili-ai-skipper-tab-content');
         tabs.forEach(tab => {
@@ -1430,28 +1514,21 @@
             });
         });
 
-        // 列表管理 (白名单/黑名单)
         const setupListManagement = (listType) => {
             const itemsContainer = document.getElementById(`${listType}-items`);
             const input = document.getElementById(`${listType}-input`);
             const addButton = document.getElementById(`add-${listType}`);
-            let list = Array.isArray(settings[listType]) ? [...settings[listType]] : []; // 创建副本
+            let list = Array.isArray(settings[listType]) ? [...settings[listType]] : [];
 
             const renderList = () => {
                 itemsContainer.innerHTML = '';
                 list.forEach((item, index) => {
                     const listItem = document.createElement('div');
-                    listItem.className = 'bili-ai-skipper-list-item'; // 需要定义此样式
+                    listItem.className = 'bili-ai-skipper-list-item';
                     listItem.innerHTML = `
-                        <span style="flex-grow: 1; word-break: break-all;">${item}</span>
-                        <button class="bili-ai-skipper-list-remove-btn" data-index="${index}" style="margin-left: 10px; background: none; border: none; color: var(--danger-color); cursor: pointer;">×</button>
+                        <span>${item}</span>
+                        <button class="bili-ai-skipper-list-remove-btn" data-index="${index}">×</button>
                     `;
-                    listItem.style.display = 'flex';
-                    listItem.style.justifyContent = 'space-between';
-                    listItem.style.alignItems = 'center';
-                    listItem.style.padding = '5px 0';
-                    listItem.style.borderBottom = '1px solid var(--border-color)';
-
                     itemsContainer.appendChild(listItem);
                 });
 
@@ -1474,34 +1551,30 @@
             });
             input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addButton.click(); } });
             renderList();
-            return () => list; // 返回获取当前列表的函数
+            return () => list;
         };
 
         const getWhitelist = setupListManagement('whitelist');
         const getBlacklist = setupListManagement('blacklist');
 
-        // 主题切换
         const modalElement = backdrop.querySelector('.bili-ai-skipper-settings-modal');
         document.getElementById('theme-light').addEventListener('click', () => {
-            settings.theme = 'light'; // 更新settings对象中的theme
+            settings.theme = 'light';
             backdrop.classList.remove('dark-theme');
-            modalElement.classList.remove('dark-theme'); // 确保模态框本身也移除类
+            modalElement.classList.remove('dark-theme');
             updateThemeButtons('light');
         });
         document.getElementById('theme-dark').addEventListener('click', () => {
-            settings.theme = 'dark'; // 更新settings对象中的theme
+            settings.theme = 'dark';
             backdrop.classList.add('dark-theme');
-            modalElement.classList.add('dark-theme'); // 确保模态框本身也添加类
+            modalElement.classList.add('dark-theme');
             updateThemeButtons('dark');
         });
 
-        // 保存和取消按钮
         document.getElementById('save-btn').addEventListener('click', () => {
             const newSettings = {
-                // 保留旧设置中未在此界面修改的部分
                 ...GM_getValue('ai_settings', DEFAULT_SETTINGS),
-                // 更新当前界面可修改的设置
-                theme: settings.theme, // 使用settings中已更新的theme
+                theme: settings.theme,
                 apiProvider: document.getElementById('api-provider').value,
                 baseUrl: document.getElementById('base-url').value,
                 apiKey: document.getElementById('api-key').value,
@@ -1514,7 +1587,7 @@
                 minAdDuration: parseInt(document.getElementById('min-ad-duration').value) || 30,
                 maxAdDuration: parseInt(document.getElementById('max-ad-duration').value) || 300,
                 maxDanmakuCount: parseInt(document.getElementById('max-danmaku-count').value) || 500,
-                minDanmakuForFullAnalysis: parseInt(document.getElementById('min-danmaku-full').value) || 100,
+                minDanmakuForFullAnalysis: parseInt(document.getElementById('min-danmaku-full').value) || 50,
                 enableWhitelist: document.getElementById('enable-whitelist').checked,
                 whitelistRegex: document.getElementById('whitelist-regex').checked,
                 whitelist: getWhitelist(),
@@ -1527,7 +1600,7 @@
             GM_setValue('ai_settings', newSettings);
             showToast('设置已保存，即将刷新页面...', 2000);
             backdrop.remove();
-            setTimeout(() => location.reload(), 500); // 稍作延迟再刷新
+            setTimeout(() => location.reload(), 500);
         });
 
         document.getElementById('cancel-btn').addEventListener('click', () => backdrop.remove());
@@ -1537,16 +1610,14 @@
 
     // --- INITIALIZATION (初始化) ---
     const init = () => {
-        injectStyles(); // 总是注入样式
+        injectStyles();
         const currentSettings = GM_getValue('ai_settings', DEFAULT_SETTINGS);
 
         if (currentSettings.firstTimeUse !== false) {
             showFirstTimeModal();
         } else {
-            createSettingsUI(); // 创建悬浮按钮
-            // 自动开始分析 (如果已配置)
+            createSettingsUI();
             if (currentSettings.apiKey && currentSettings.model) {
-                // 延迟执行以确保页面元素加载完毕
                 setTimeout(main, 3000);
             } else {
                 showToast('请点击悬浮按钮配置API密钥和模型', 3000);
@@ -1554,7 +1625,6 @@
         }
     };
 
-    // 等待页面加载完成
     if (document.readyState === 'loading') {
         window.addEventListener('DOMContentLoaded', init);
     } else {
