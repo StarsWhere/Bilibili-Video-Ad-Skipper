@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili Ad Skipper (AI Powered)
 // @namespace    http://tampermonkey.net/
-// @version      2.7
+// @version      2.0
 // @description  Uses an AI agent to analyze Bilibili danmaku and comments, detect ad segments with probability, and automatically skip them. Enhanced with probability mechanism and comment analysis.
 // @author       StarsWhere (Modified by Gemini)
 // @match        https://www.bilibili.com/video/*
@@ -69,7 +69,7 @@
         minAdDuration: 30,
         maxAdDuration: 300,
         maxDanmakuCount: 500,
-        minDanmakuForFullAnalysis: 50,
+        minDanmakuForFullAnalysis: 10,
         enableWhitelist: true,
         whitelistRegex: false,
         whitelist: [
