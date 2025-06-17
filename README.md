@@ -48,7 +48,27 @@
 2.  **安装本脚本**
     -   从源代码安装：打开 Tampermonkey 管理面板，新建脚本，将项目中的 `.js` 文件内容完整复制进去并保存。
 
-## 🛠️ 配置说明
+## 🚀 浏览器扩展安装 (推荐)
+
+除了油猴脚本，本项目也提供浏览器扩展版本，推荐使用此方式获得更佳体验和自动更新：
+
+1.  **下载扩展**：
+    -   前往 [GitHub Releases 页面](https://github.com/YOUR-USERNAME/YOUR-REPO/releases) 下载最新版本的 `bilibili-ad-skipper.zip` 文件。
+    -   解压下载的 `.zip` 文件到一个你方便找到的文件夹（例如：`bilibili-ad-skipper-extension`）。
+
+2.  **安装到浏览器**：
+    -   **Chrome / Edge**:
+        1.  打开浏览器，访问 `chrome://extensions` (Chrome) 或 `edge://extensions` (Edge)。
+        2.  开启右上角的“开发者模式”（Developer mode）。
+        3.  点击“加载已解压的扩展程序”（Load unpacked），然后选择你刚才解压的 `bilibili-ad-skipper-extension` 文件夹。
+        4.  扩展程序会出现在列表中，确保其已启用。
+    -   **Firefox**:
+        1.  打开浏览器，访问 `about:debugging#/runtime/this-firefox`。
+        2.  点击“临时加载附加组件”（Load Temporary Add-on）。
+        3.  选择你解压文件夹中的 `manifest.json` 文件。
+        4.  **注意**：Firefox 的临时加载在浏览器关闭后会失效，每次重启浏览器都需要重新加载。
+
+## ️ 配置说明
 
 本脚本**需要您提供自己的 AI 服务 API Key** 才能正常工作。
 
