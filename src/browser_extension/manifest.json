@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "Bilibili Ad Skipper (AI Powered)",
+  "version": "2.0",
+  "description": "Uses an AI agent to analyze Bilibili danmaku and comments, detect ad segments with probability, and automatically skip them. Enhanced with probability mechanism and comment analysis.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.bilibili.com/video/*"],
+      "js": ["src/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://api.bilibili.com/*",
+    "https://comment.bilibili.com/*",
+    "https://api.openai.com/*",
+    "https://api.deepseek.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.anthropic.com/*",
+    "<all_urls>"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/settings.png"],
+      "matches": ["https://www.bilibili.com/*"]
+    }
+  ]
+}

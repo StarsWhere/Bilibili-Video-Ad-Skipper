@@ -1083,7 +1083,7 @@
 
         const input = modal.querySelector('.bili-ai-skipper-first-time-input');
         const btn = modal.querySelector('.bili-ai-skipper-first-time-btn');
-        const targetText = '我已确认理解插件功能,我会尽可能遵循倡导发送坐标弹幕';
+        const targetText = '我已确认理解插件功能,我会遵循倡导发送坐标弹幕';
 
         input.addEventListener('input', () => {
             btn.disabled = input.value.trim() !== targetText;
