@@ -50,7 +50,7 @@
 本脚本**需要您提供自己的 AI 服务 API Key** 才能正常工作。
 
 1.  打开任意一个 Bilibili 视频页面。
-2.  点击页面右侧出现的**齿轮图标**⚙️ [<img src="https://img.picui.cn/free/2025/06/18/68524942bfc36.png" alt="设置图标" width="20"/>](https://img.picui.cn/free/2025/06/18/68524942bfc36.png)，打开“AI 广告跳过设置”窗口。
+2.  点击页面右侧出现的**Icon图标** [<img src="https://img.picui.cn/free/2025/06/18/68524942bfc36.png" alt="设置图标" width="20"/>](https://img.picui.cn/free/2025/06/18/68524942bfc36.png)，打开“AI 广告跳过设置”窗口。
 3.  填写以下配置项：
     -   **API Base URL**: 你的 AI 服务 API 地址。
         -   如果你使用 OpenAI 官方服务，通常是 `https://api.openai.com`。
