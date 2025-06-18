@@ -1666,9 +1666,9 @@
             showFirstTimeModal();
         } else {
             createSettingsUI();
-            if (currentSettings.apiKey && currentSettings.model) {
-                setTimeout(main, 3000);
-            } else {
+            // 首次加载时，不直接调用main，而是依赖urlCheckInterval来触发
+            // urlCheckInterval会在检测到新的bvid时（包括首次加载时bvid从null变为实际值）触发main
+            if (!currentSettings.apiKey || !currentSettings.model) {
                 showToast('请点击悬浮按钮配置API密钥和模型', 3000);
             }
         }
