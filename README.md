@@ -4,17 +4,28 @@
 ![项目Logo](./png/icon.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Greasy Fork](https://img.shields.io/greasyfork/v/YOUR-SCRIPT-ID?label=Greasy%20Fork)](https://greasyfork.org/zh-CN/scripts/YOUR-SCRIPT-ID)
+[![Greasy Fork](https://img.shields.io/greasyfork/v/539827?label=Greasy%20Fork)](https://greasyfork.org/zh-CN/scripts/539827-bilibili-video-ad-skipper)
 [![Language](https://img.shields.io/badge/language-JavaScript-orange.svg)](https://www.javascript.com/)
 [![Status](https://img.shields.io/badge/status-active-success.svg)](#)
 
-
-
 这是一款功能强大的油猴脚本，它利用 AI 代理（Agent）智能分析 Bilibili 视频的弹幕和评论，以概率形式精准检测并自动跳过视频中内置的商业广告（恰饭）部分。
+
+## 目录
+- [✨ 功能特点](#-功能特点)
+- [📸 效果截图](#-效果截图)
+- [🚀 安装步骤](#-安装步骤)
+  - [油猴脚本安装](#油猴脚本安装)
+  - [浏览器扩展安装 (推荐)](#浏览器扩展安装-推荐)
+- [️ 配置说明](#️-配置说明)
+- [💡 使用方法](#-使用方法)
+- [核心提示词 (Prompt)](#核心提示词-prompt)
+- [🤝 贡献](#-贡献)
+- [📜 许可证](#-许可证)
+- [⚠️ 免责声明](#️-免责声明)
 
 ## ✨ 功能特点
 
--   **🤖 AI 驱动分析**：调用大语言模型（如 GPT 系列）作为智能代理，深度理解弹幕和评论的上下文语境，而非简单的关键词匹配。
+-   **🤖 AI 驱动分析**：调用大语言模型（如 Gemini 系列）作为智能代理，深度理解弹幕和评论的上下文语境，而非简单的关键词匹配。
 -   **🎯 多维度检测**：同时分析**海量弹幕**和**置顶评论**，结合两种信息源，大幅提升广告识别的准确率。
 -   **📈 概率化结果**：AI 会给出广告的概率评估（0-100%），并根据广告时长进行智能惩罚调整，让判断更科学。
 -   **⚙️ 高度可配置**：用户可以自由配置 API Key、API Base URL、AI 模型、自动跳过概率阈值和时长惩罚系数。
@@ -27,18 +38,19 @@
 
 ## 📸 效果截图
 
-#### 设置界面
+### 设置界面
 用户可以轻松配置自己的 AI 服务参数。
 
 ![设置界面](./png/settings.png)
 
-#### AI 分析结果
+### AI 分析结果
 分析完成后，脚本会以弹窗形式展示详细结果，用户可根据结果选择是否启用自动跳过。
 
 ![AI分析结果](./png/window.png)
 
 ## 🚀 安装步骤
 
+### 油猴脚本安装
 1.  **安装脚本管理器**
     首先，你的浏览器需要安装一个用户脚本管理器扩展。推荐使用 [**Tampermonkey**](https://www.tampermonkey.net/)。
     -   [Chrome 安装地址](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
@@ -46,14 +58,15 @@
     -   [Edge 安装地址](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepofghlfgfgbfp)
 
 2.  **安装本脚本**
-    -   从源代码安装：打开 Tampermonkey 管理面板，新建脚本，将项目中的 `.js` 文件内容完整复制进去并保存。
+    -   点击此处安装：[Bilibili Video Ad Skipper](https://greasyfork.org/zh-CN/scripts/539827-bilibili-video-ad-skipper)
+    -   或者，从源代码安装：打开 Tampermonkey 管理面板，新建脚本，将项目中的 `.js` 文件内容完整复制进去并保存。
 
-## 🚀 浏览器扩展安装 (推荐)
+### 浏览器扩展安装 (推荐)
 
 除了油猴脚本，本项目也提供浏览器扩展版本，推荐使用此方式获得更佳体验和自动更新：
 
 1.  **下载扩展**：
-    -   前往 [GitHub Releases 页面](https://github.com/YOUR-USERNAME/YOUR-REPO/releases) 下载最新版本的 `bilibili-ad-skipper.zip` 文件。
+    -   前往 [GitHub Releases 页面](https://github.com/StarsWhere/Bilibili-Video-Ad-Skipper/releases) 下载最新版本的 `bilibili-ad-skipper.zip` 文件。
     -   解压下载的 `.zip` 文件到一个你方便找到的文件夹（例如：`bilibili-ad-skipper-extension`）。
 
 2.  **安装到浏览器**：
@@ -85,6 +98,28 @@
     -   **时长惩罚 (%/分钟)**: AI 识别出的广告时间每增加一分钟，广告概率会降低的百分比。用于防止将过长的正常内容误判为广告。默认 `5`。
     -   **默认启用自动跳过**: 总开关。如果取消勾选，即使概率达标，也不会默认开启跳过功能。
 4.  点击**保存**。配置完成后，脚本将在新打开的视频页自动运行。
+
+### 高级设置 (Advanced Settings)
+
+在设置界面的“高级设置”标签页中，您可以对脚本的更深层行为进行调整，以满足个性化需求：
+
+-   **广告时长限制**：
+    -   **最小广告时长 (秒)** (`minAdDuration`): AI 识别出的广告时长若低于此值，将受到惩罚性概率降低。默认 `30` 秒。
+    -   **最大广告时长 (秒)** (`maxAdDuration`): AI 识别出的广告时长若高于此值，将受到惩罚性概率降低。默认 `300` 秒。
+
+-   **弹幕过滤设置**：
+    -   **最大弹幕数量 (用于分析)** (`maxDanmakuCount`): 当过滤后的弹幕数量超过此值时，脚本将随机采样，只取最多此数量的弹幕进行 AI 分析，以优化性能。默认 `500` 条。
+    -   **完整分析所需最小弹幕数** (`minDanmakuForFullAnalysis`): 当有效弹幕数量低于此值时，脚本可能跳过 AI 深度分析，或采用简化逻辑判断，以避免在弹幕稀少时进行无效的 AI 调用。默认 `10` 条。
+
+-   **白名单设置**：
+    -   **启用白名单 (仅分析含白名单关键词的弹幕)** (`enableWhitelist`): 开启后，AI 将只分析包含白名单中关键词的弹幕。默认启用。
+    -   **白名单支持正则表达式** (`whitelistRegex`): 勾选后，白名单中的关键词将被视为正则表达式进行匹配。
+    -   **白名单** (`whitelist`): 您可以添加希望 AI 重点关注的弹幕关键词或正则表达式（例如：`分`, `秒`, `空降`, `指路`）。
+
+-   **黑名单设置**：
+    -   **启用黑名单 (过滤掉含黑名单关键词的弹幕)** (`enableBlacklist`): 开启后，AI 将过滤掉包含黑名单中关键词的弹幕，避免干扰判断。默认启用。
+    -   **黑名单支持正则表达式** (`blacklistRegex`): 勾选后，黑名单中的关键词将被视为正则表达式进行匹配。
+    -   **黑名单** (`blacklist`): 您可以添加不希望 AI 分析的弹幕关键词或正则表达式（例如：`正片`, `省流`, `总结`）。
 
 ## 💡 使用方法
 
@@ -151,7 +186,7 @@
 
 ## 🤝 贡献
 
-欢迎任何形式的贡献！如果你有好的想法、建议或发现了 Bug，请随时提交 [Issues](https://github.com/YOUR-USERNAME/YOUR-REPO/issues) 或 [Pull Requests](https://github.com/YOUR-USERNAME/YOUR-REPO/pulls)。
+欢迎任何形式的贡献！如果你有好的想法、建议或发现了 Bug，请随时提交 [Issues](https://github.com/YOUR-USERNAME/YOUR-REPO/issues) 或 [Pull Requests](https://github.com/YOUR-USERNAME/YOUR-REPO/pulls)。 <!-- 请将 YOUR-USERNAME/YOUR-REPO 替换为你的 GitHub 仓库地址 -->
 
 ## 📜 许可证
 

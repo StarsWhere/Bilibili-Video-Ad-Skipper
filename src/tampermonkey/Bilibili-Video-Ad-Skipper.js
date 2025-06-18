@@ -1,9 +1,11 @@
 // ==UserScript==
-// @name         Bilibili Ad Skipper (AI Powered)
+// @name         Bilibili Video Ad Skipper
 // @namespace    http://tampermonkey.net/
+// @homepageURL  https://github.com/StarsWhere/Bilibili-Video-Ad-Skipper
 // @version      2.0
-// @description  Uses an AI agent to analyze Bilibili danmaku and comments, detect ad segments with probability, and automatically skip them. Enhanced with probability mechanism and comment analysis.
-// @author       StarsWhere (Modified by Gemini)
+// @description  本工具利用人工智能（AI）分析哔哩哔哩（Bilibili）的弹幕和评论，能够基于概率识别视频中的广告片段，并实现自动跳过。它结合了概率机制与评论分析，从而提高了广告检测的精准度。
+// @author       StarsWhere
+// @license      MIT
 // @match        https://www.bilibili.com/video/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
