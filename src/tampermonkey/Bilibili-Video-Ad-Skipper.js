@@ -18,14 +18,14 @@
 // @connect      generativelanguage.googleapis.com
 // @connect      api.anthropic.com
 // @connect      *
-// @icon         https://raw.githubusercontent.com/StarsWhere/Bilibili-Video-Ad-Skipper/main/png/icon.png
+// @icon         https://img.picui.cn/free/2025/06/18/68524942bfc36.png
 // ==/UserScript==
 
 (function () {
     'use strict';
 
     // --- CONSTANTS (常量定义) ---
-    const settingsIconBase64 = 'https://raw.githubusercontent.com/StarsWhere/Bilibili-Video-Ad-Skipper/main/png/icon.png'
+    const settingsIconBase64 = 'https://img.picui.cn/free/2025/06/18/68524942bfc36.png'
     const API_PROVIDERS = {
         openai: {
             defaultUrl: 'https://api.openai.com/v1',
@@ -1606,7 +1606,19 @@
 
         document.getElementById('cancel-btn').addEventListener('click', () => backdrop.remove());
         backdrop.querySelector('.bili-ai-skipper-settings-close').addEventListener('click', () => backdrop.remove());
-        backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+
+        let isMouseDownOnBackdrop = false;
+        backdrop.addEventListener('mousedown', (e) => {
+            if (e.target === backdrop) {
+                isMouseDownOnBackdrop = true;
+            }
+        });
+        backdrop.addEventListener('mouseup', (e) => {
+            if (isMouseDownOnBackdrop && e.target === backdrop) {
+                backdrop.remove();
+            }
+            isMouseDownOnBackdrop = false;
+        });
     };
 
     // --- INITIALIZATION (初始化) ---
