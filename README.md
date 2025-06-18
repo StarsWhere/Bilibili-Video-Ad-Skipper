@@ -8,7 +8,7 @@
 [![Language](https://img.shields.io/badge/language-JavaScript-orange.svg)](https://www.javascript.com/)
 [![Status](https://img.shields.io/badge/status-active-success.svg)](#)
 
-这是一款功能强大的油猴脚本，它利用 AI 代理（Agent）智能分析 Bilibili 视频的弹幕和评论，以概率形式精准检测并自动跳过视频中内置的商业广告（恰饭）部分。
+这是一款功能强大的油猴脚本和插件，它利用 AI 代理（Agent）智能分析 Bilibili 视频的弹幕和评论，以概率形式精准检测并自动跳过视频中内置的商业广告（恰饭）部分。
 
 ## 目录
 - [✨ 功能特点](#-功能特点)
@@ -50,7 +50,7 @@
 
 ## 🚀 安装步骤
 
-### 油猴脚本安装
+### 油猴脚本安装 (推荐)
 1.  **安装脚本管理器**
     首先，你的浏览器需要安装一个用户脚本管理器扩展。推荐使用 [**Tampermonkey**](https://www.tampermonkey.net/)。
     -   [Chrome 安装地址](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
@@ -61,7 +61,7 @@
     -   点击此处安装：[Bilibili Video Ad Skipper](https://greasyfork.org/zh-CN/scripts/539827-bilibili-video-ad-skipper)
     -   或者，从源代码安装：打开 Tampermonkey 管理面板，新建脚本，将项目中的 `.js` 文件内容完整复制进去并保存。
 
-### 浏览器扩展安装 (推荐)
+### 浏览器扩展安装 
 
 除了油猴脚本，本项目也提供浏览器扩展版本，推荐使用此方式获得更佳体验和自动更新：
 
