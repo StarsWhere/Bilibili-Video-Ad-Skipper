@@ -927,6 +927,14 @@
     const main = async () => {
         try {
             showToast('AI跳广告脚本已启动,正在分析...', 2000);
+            
+            // 获取当前BV号并存储
+            const newBvidMatch = window.location.pathname.match(/video\/(BV[1-9A-HJ-NP-Za-km-z]+)/);
+            if (!newBvidMatch) {
+                console.log('未找到BVID');
+                return;
+            }
+            currentBvid = newBvidMatch[1];
 
             const bvidMatch = window.location.pathname.match(/video\/(BV[1-9A-HJ-NP-Za-km-z]+)/);
             if (!bvidMatch) {
@@ -1597,10 +1605,36 @@
         });
     };
 
+    // 全局变量存储当前BV号
+    let currentBvid = null;
+    let skipTimer = null;
+    let urlCheckInterval = null;
+
     // --- INITIALIZATION (初始化) ---
     const init = async () => {
         await injectStyles();
         const currentSettings = await getStorage('ai_settings', DEFAULT_SETTINGS);
+
+        // 启动URL变化检测
+        urlCheckInterval = setInterval(() => {
+            const bvidMatch = window.location.pathname.match(/video\/(BV[1-9A-HJ-NP-Za-km-z]+)/);
+            const newBvid = bvidMatch ? bvidMatch[1] : null;
+            
+            if (newBvid && newBvid !== currentBvid) {
+                // 清理旧资源
+                if (skipTimer) clearInterval(skipTimer);
+                const existingPopup = document.querySelector('.bili-ai-skipper-result-popup');
+                if (existingPopup) existingPopup.remove();
+                const existingErrorPopup = document.querySelector('.bili-ai-skipper-result-popup.error');
+                if (existingErrorPopup) existingErrorPopup.remove();
+                
+                // 更新BV号并重新执行分析
+                currentBvid = newBvid;
+                if (currentSettings.apiKey && currentSettings.model) {
+                    main();
+                }
+            }
+        }, 2000);
 
         if (currentSettings.firstTimeUse !== false) {
             showFirstTimeModal();
