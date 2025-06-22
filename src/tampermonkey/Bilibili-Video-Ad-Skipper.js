@@ -606,6 +606,10 @@
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: `https://api.bilibili.com/x/v1/dm/list.so?oid=${cid}`,
+                headers: {
+                    "Accept-Charset": "utf-8"
+                },
+                responseType: "arraybuffer",
                 onload: response => resolve(response.responseText),
                 onerror: () => reject(new Error('获取弹幕失败'))
             });
@@ -649,9 +653,35 @@
     };
 
 
-    const parseAndFilterDanmaku = (xmlString) => {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+    const parseAndFilterDanmaku = (response) => {
+        let xmlDoc
+        try {
+            // 1. 处理压缩数据（如果需要）
+            let data = response.response;
+
+            // 2. 解码数据（假设使用 UTF-8，B站通常使用 UTF-8）
+            const decoder = new TextDecoder("utf-8");
+            const text = decoder.decode(data);
+
+            // 3. 验证是否正确解码（检查是否包含乱码字符）
+            if (text.includes("�")) {
+                console.warn("可能存在乱码，尝试其他编码...");
+                // 尝试 GBK 编码（如果 UTF-8 失败）
+                const decoderGBK = new TextDecoder("gbk");
+                const textGBK = decoderGBK.decode(data);
+                console.log("GBK 解码结果:", textGBK);
+            } else {
+                console.log("UTF-8 解码成功:", text);
+            }
+
+            // 4. 解析 XML（如果需要）
+            const parser = new DOMParser();
+            xmlDoc = parser.parseFromString(text, "text/xml");
+            console.log("XML 解析结果:", xmlDoc);
+
+        } catch (error) {
+            console.error("处理响应时出错:", error);
+        }
         const danmakus = Array.from(xmlDoc.querySelectorAll('d'));
 
         if (danmakus.length === 0) return null;
@@ -740,7 +770,8 @@
 
         headers = {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${settings.apiKey}`
+            'Authorization': `Bearer ${settings.apiKey}`,
+            "Accept-Charset": "utf-8"
         };
         url = `${baseUrl}/chat/completions`;
         requestBody = {
@@ -789,11 +820,24 @@
             GM_xmlhttpRequest({
                 method: 'POST',
                 url: url,
+                responseType: "arraybuffer",
                 headers: headers,
                 data: JSON.stringify(requestBody),
                 onload: response => {
                     try {
-                        const data = JSON.parse(response.responseText);
+                        const buffer = response.response;
+
+                        // 尝试 UTF-8 解码
+                        const decoder = new TextDecoder("utf-8");
+                        let text = decoder.decode(buffer);
+
+                        // 检测是否有乱码
+                        if (text.includes("�")) {
+                            console.warn("可能是 GBK 编码，尝试重新解码");
+                            const gbkDecoder = new TextDecoder("gbk");
+                            text = gbkDecoder.decode(buffer);
+                        }
+                        const data = JSON.parse(text);
                         let content;
 
                         if (settings.apiProvider === 'gemini') {
