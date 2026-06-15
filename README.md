@@ -1,3 +1,30 @@
+# Bilibili-Video-Ad-Skipper
+
+<!-- starswhere-docs-overview -->
+
+## 项目概览
+
+**定位**：一个用于优化 Bilibili 视频观看体验的广告跳过工具，同时维护用户脚本和浏览器扩展实现。
+
+**核心功能**：
+- 自动识别并跳过广告相关流程
+- Tampermonkey 脚本版本
+- 浏览器扩展 manifest 版本
+- 包含 GreasyFork 发布说明
+
+**技术栈**：JavaScript、Userscript、Browser Extension。
+
+**目录与模块**：`src/tampermonkey` 保存用户脚本；`src/browser_extension` 保存扩展清单；`GREASYFORK_README.md` 用于脚本发布说明。
+
+**使用方式**：用户脚本可复制到 Tampermonkey；扩展版本可按浏览器开发者模式加载。
+
+**配置说明**：脚本内部包含匹配规则和跳过策略。
+
+**适用场景**：适合 Bilibili 视频播放页广告跳过和浏览器脚本开发参考。
+
+**注意事项**：页面结构和广告逻辑变化会影响效果，维护时需要关注站点更新。
+
+<!-- /starswhere-docs-overview -->
 
 # B站视频广告跳过助手 (Bilibili Ad Skipper)
 
